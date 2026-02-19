@@ -58,7 +58,7 @@ def renderDashboard():
     
     #Show only visible columns
     st.dataframe(
-        df[["Name," "Email", "Course", "Status"]],
+        df[["Name", "Email", "Course", "Status"]],
         use_container_width=True,
         hide_index=True
     )
@@ -68,7 +68,7 @@ def renderDashboard():
     #Create readable labels for dropdown
     recordLabels = [
         f'{row["Name"]} ({row["Email"]})'
-        for _, row in df.iterows()
+        for _, row in df.iterrows()
     ]   
 
     selectedLabel = st.selectbox("Select a student", recordLabels)

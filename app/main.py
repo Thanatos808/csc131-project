@@ -28,10 +28,16 @@ def main():
     #radio button lets user choose page manually
     with st.sidebar:
         st.title("Navigation")
-        selectedPage = st.radio("Go to", list(pageOptions.keys()),
-        index=(st.session_state["currentPage"])
-    )   
-    st.session_state["currentPage"] = selectedPage  #update session state with user changes
+        pageNames = list(pageOptions.keys()) #get list of page names
+        currentIndex = pageNames.index(st.session_state["currentPage"]) #find index of current page
+
+        selectedPage = st.radio(
+            "Go to",
+            pageNames,
+            index=currentIndex
+        )
+
+        st.session_state["currentPage"] = selectedPage  #update session state with user changes
 
     pageOptions[selectedPage]()
 
