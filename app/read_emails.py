@@ -37,7 +37,7 @@ def read_emails(access_token):
 
     params = {
         "$select": "subject,from,receivedDateTime,bodyPreview",
-        "$top": 10
+        "$top": 10 # only 10 emails
     }
 
     response = requests.get(GRAPH_ENDPOINT, headers=headers, params=params)
