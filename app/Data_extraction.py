@@ -161,8 +161,6 @@ def demo_email_parsing():
         print(pay_record)
     else:
         print("\nPayment email without matching registration, skipping")
-
     # Run demo 
-
 if __name__ == "__main__":
     demo_email_parsing()
