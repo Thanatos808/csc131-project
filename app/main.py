@@ -70,10 +70,7 @@ def export_to_json(rows: List[Dict], path: str) -> None:
 
 
 def append_row_to_sheet(gc, sheet_id: str, tab_name: str, row_dict: Dict, columns: List[str]) -> None:
-    """
-    Appends a row to the given Google Sheet tab using the provided schema.
-    Order is controlled ONLY by 'columns'.
-    """
+   
     sh = gc.open_by_key(sheet_id)
     ws = sh.worksheet(tab_name)
 
