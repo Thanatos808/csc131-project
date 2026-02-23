@@ -8,7 +8,7 @@ def renderStudentDetail():
 
     #If no record selected, show warning
     if not recordId:
-        st.warning("No reecord selected. Go to dashboard and open a record.")
+        st.warning("No record selected. Go to dashboard and open a record.")
         return
 
     #for now just confirm correct navigation
