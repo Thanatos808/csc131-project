@@ -1,11 +1,17 @@
 import re, time
 from playwright.sync_api import Playwright, sync_playwright, expect
-# ---------- CONFIG ----------
-USERNAME = "Sacstatecpr@outlook.com"  # <<< MOVED to config
-PASSWORD = "ssCPR123*"  # <<< MOVED to config
-INSTRUCTOR_NAME = "sac"  # <<< MOVED to config
-DATE = "2026-03-03"  # <<< MOVED to config, easier to change
+# CONFIG
+USERNAME = "Sacstatecpr@outlook.com"
+PASSWORD = "ssCPR123*"  
+INSTRUCTOR_NAME = "sac"  
+DATE = "2026-03-03"  
 
+# TO DO !!!!
+# SELECT INSTRUCTOR
+# SELECT DATE
+# ACTION --> VIEW
+# ACCEPT THE STUDENT (TWICE)
+# READ THE STUDENT'S INFO
 
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
@@ -36,21 +42,12 @@ def run(playwright: Playwright) -> None:
         if (btn) btn.click();
     """)
     
-    # now navigate
+    # SELECT INSTRUCTOR (in progress)
     page.locator(".css-19bb58m").first.click()
     page.locator("#react-select-5-option-2").get_by_text("Sac State").click()
 
-    # SELECT INSTRUCTOR
-    
-    # SELECT DATE
 
-    # ACTION --> VIEW
 
-    # ACCEPT THE STUDENT (TWICE)
-
-    # READ THE STUDENT'S INFO
-
-    # ---------------------
     context.close()
     browser.close()
 
