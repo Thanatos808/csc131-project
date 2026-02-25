@@ -2,6 +2,8 @@ import csv
 import json
 from typing import Dict, List
 
+import streamlit as st
+
 
 AHA_COLUMNS: List[str] = [
     "student_name",
@@ -70,9 +72,72 @@ def export_to_json(rows: List[Dict], path: str) -> None:
 
 
 def append_row_to_sheet(gc, sheet_id: str, tab_name: str, row_dict: Dict, columns: List[str]) -> None:
-   
     sh = gc.open_by_key(sheet_id)
     ws = sh.worksheet(tab_name)
 
     values = [row_dict.get(col, "") for col in columns]
-    ws.append_row(values, value_input_option="USER_ENTERED")
+    ws.append_row(values, value_input_option="USER_ENTERED")  # fixed Python comment
+
+
+def renderExport():
+    """
+    Streamlit page function expected by app/main.py:
+      from app.ui.Export import renderExport
+    """
+
+    st.title("Export")
+
+    st.write("Choose an export format below.")
+
+    # NOTE: This is a placeholder UI so your app runs.
+    # Next step is to connect these buttons to your app's actual data.
+
+    st.subheader("Export options")
+
+    export_type = st.radio("Export type", ["CSV", "JSON"], horizontal=True)
+
+    st.info(
+        "This page is wired up so the app runs without import errors.\n\n"
+        "To actually export data, we need to know where your student rows live "
+        "(for example: st.session_state['students'] or a database)."
+    )
+
+    # Example “fake” rows so the UI demonstrates output without breaking.
+    demo_rows = [
+        {
+            "student_name": "Demo Student",
+            "email": "demo@example.com",
+            "phone": "555-555-5555",
+            "course": "CSC 131",
+            "class_date": "2026-02-24",
+            "location": "Online",
+            "payment_status": "unknown",
+            "received_datetime": "",
+            "source_subject": "",
+            "source_internet_message_id": "",
+        }
+    ]
+
+    if st.button("Download Demo Export"):
+        if export_type == "CSV":
+            # Streamlit download without writing to disk
+            import io
+            output = io.StringIO()
+            writer = csv.DictWriter(output, fieldnames=AHA_COLUMNS)
+            writer.writeheader()
+            for r in demo_rows:
+                writer.writerow({c: r.get(c, "") for c in AHA_COLUMNS})
+
+            st.download_button(
+                label="Click to download CSV",
+                data=output.getvalue(),
+                file_name="export.csv",
+                mime="text/csv",
+            )
+        else:
+            st.download_button(
+                label="Click to download JSON",
+                data=json.dumps(demo_rows, indent=2),
+                file_name="export.json",
+                mime="application/json",
+            )
