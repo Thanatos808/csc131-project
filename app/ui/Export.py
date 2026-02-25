@@ -89,8 +89,6 @@ def renderExport():
 
     st.write("Choose an export format below.")
 
-    # NOTE: This is a placeholder UI so your app runs.
-    # Next step is to connect these buttons to your app's actual data.
 
     st.subheader("Export options")
 
@@ -102,7 +100,7 @@ def renderExport():
         "(for example: st.session_state['students'] or a database)."
     )
 
-    # Example “fake” rows so the UI demonstrates output without breaking.
+
     demo_rows = [
         {
             "student_name": "Demo Student",
@@ -120,7 +118,6 @@ def renderExport():
 
     if st.button("Download Demo Export"):
         if export_type == "CSV":
-            # Streamlit download without writing to disk
             import io
             output = io.StringIO()
             writer = csv.DictWriter(output, fieldnames=AHA_COLUMNS)
