@@ -1,18 +1,41 @@
 import re, time
+from datetime import datetime
+from click import option
 from playwright.sync_api import Playwright, sync_playwright, expect
 # CONFIG
 USERNAME = "Sacstatecpr@outlook.com"
 PASSWORD = "ssCPR123*"  
 INSTRUCTOR_NAME = "sac"  
-DATE = "2026-03-03"  
+DATE = "02/19/2026"  
 
 # TO DO !!!!
-# SELECT INSTRUCTOR
-# SELECT DATE
 # ACTION --> VIEW
 # ACCEPT THE STUDENT (TWICE)
 # READ THE STUDENT'S INFO
+def select_date(page, date_str):
+    target_date = datetime.strptime(DATE, "%m/%d/%Y")
+    target_month_year = target_date.strftime("%B %Y")   # February 2026
+    target_day = str(target_date.day)                   # 19
 
+    # Open date picker
+    page.get_by_role("button", name=re.compile("Choose a Date Range")).click()
+
+    # Wait for calendar to appear
+    page.wait_for_selector(".react-calendar")
+
+    # Navigate to correct month
+    while True:
+        visible_month = page.locator(".react-calendar__navigation__label").inner_text()
+
+        if target_month_year in visible_month:
+            break
+
+        page.get_by_role("button", name=re.compile("Next")).click()
+
+    # Click the correct day
+    page.get_by_role("button", name=target_day).click()
+
+    
 def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
@@ -25,7 +48,7 @@ def run(playwright: Playwright) -> None:
     page.get_by_role("textbox", name="Password").fill(PASSWORD)
     page.get_by_role("button", name="Sign In").click()
 
-    # NAVIGATING TO CLASS
+    # NAVIGATING TO CLASS WITHOUT USING MENUS
     page.locator('span.MainMenuNavigation_expandConatiner__M5ExW', has_text='Classes').wait_for(state='visible', timeout=30000)
     page.evaluate("""
         const classesSpan = [...document.querySelectorAll('span.MainMenuNavigation_expandConatiner__M5ExW')]
@@ -41,16 +64,31 @@ def run(playwright: Playwright) -> None:
         const btn = document.querySelector('button[title="Training Site Classes"]');
         if (btn) btn.click();
     """)
-    
+
+    # ORGANIZATION SELECTION (only needed for testing)
+    page.get_by_label("Organization").click()
+    page.get_by_label("Organization").fill("Sac State")
+
+    # Wait for dropdown option and click it
+    org_option = page.locator("div[role='option']", has_text="Sac State")
+    org_option.wait_for(state="visible")
+    org_option.click()
+
     # SELECT INSTRUCTOR (in progress)
-    page.locator(".css-19bb58m").first.click()
-    page.locator("#react-select-5-option-2").get_by_text("Sac State").click()
+    page.get_by_role("textbox", name="Instructor").click()
+    page.get_by_role("textbox", name="Instructor").fill(INSTRUCTOR_NAME)
+    page.wait_for_timeout(500)
+    page.get_by_role("listitem").filter(has_text="/ Sac State").click()
+    
+    
 
-
-
+    # SELECT DATE
+    select_date(page, DATE)
+    time.sleep(60)
     context.close()
     browser.close()
 
 
 with sync_playwright() as playwright:
     run(playwright)
+# playwright codegen https://atlas.heart.org
