@@ -61,8 +61,10 @@ def read_emails(access_token):
         print(f"Received: {received}")
         print(f"Preview: {preview}")
         print("-" * 50)
+    return emails
 
 
 if __name__ == "__main__":
     token = get_access_token()
-    read_emails(token)
+    emails = read_emails(token)
+    print(emails)
