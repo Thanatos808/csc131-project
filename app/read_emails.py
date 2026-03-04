@@ -32,11 +32,12 @@ def get_access_token():
 
 def read_emails(access_token):
     headers = {
-        "Authorization": f"Bearer {access_token}"
+        "Authorization": f"Bearer {access_token}",
+        "Prefer": 'outlook.body-content-type="text"'
     }
 
     params = {
-        "$select": "subject,from,receivedDateTime,bodyPreview",
+        "$select": "subject,from,receivedDateTime,body",
         "$top": 10 # only 10 emails
     }
 
@@ -53,18 +54,18 @@ def read_emails(access_token):
         subject = email.get("subject", "No Subject")
         sender = email.get("from", {}).get("emailAddress", {}).get("address", "Unknown")
         received = email.get("receivedDateTime", "Unknown")
-        preview = email.get("bodyPreview", "")
+        body = email.get("body", {}).get("content", "")
 
         print(f"Email #{i}")
         print(f"From: {sender}")
         print(f"Subject: {subject}")
         print(f"Received: {received}")
-        print(f"Preview: {preview}")
-        print("-" * 50)
+        print("Body:")
+        print(body)
     return emails
 
 
 if __name__ == "__main__":
     token = get_access_token()
     emails = read_emails(token)
-    print(emails)
+    #print(emails)
