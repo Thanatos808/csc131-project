@@ -97,7 +97,7 @@ def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
     row.wait_for(state="visible")  # ensure it's loaded
 
     # get the discipline span text inside that row
-    bls_span_text = row.locator("span.dynamicTable_disciplineStyle__msaHF").text_content()
+    bls_span_text = row.locator("span.dynamicTable_disciplineStyle__msaHF").text_content() # course
     
 
     # navigate through action menu to accept the student
@@ -114,15 +114,16 @@ def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
     name_locator.wait_for(state="visible", timeout=10000)
     name = name_locator.inner_text()
     
-    # print results
-    print("Discipline:", bls_span_text)  # should print BLS
-    print("Email:", email)
-    print("Name:",name)
+
     # time.sleep(60)
     context.close()
     browser.close()
+    return {
+        "name": name,
+        "email": email,
+        "discipline": bls_span_text,
+        "course_date": date_str,
+        "instructor": instructor_name
+    }
 
-
-with sync_playwright() as playwright:
-    run(playwright)
 # playwright codegen https://atlas.heart.org

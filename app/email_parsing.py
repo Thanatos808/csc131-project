@@ -186,4 +186,3 @@ if __name__ == "__main__":
         for key, value in r.items():
             print(f"{key}: {value}")
         print("-" * 40)
-    #    atlas_emails = [r for r in records if r.get("email_type") == "atlas_notification"]
