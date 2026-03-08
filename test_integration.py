@@ -2,7 +2,8 @@
 from app.read_emails import get_access_token
 from app.email_parsing import process_emails
 import requests
-
+from app.atlas_automation import run as atlas_run
+from playwright.sync_api import Playwright, sync_playwright
 # 
 # Step 1: Get access token
 #
