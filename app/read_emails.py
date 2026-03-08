@@ -37,8 +37,8 @@ def read_emails(access_token):
     }
 
     params = {
-        "$select": "subject,from,receivedDateTime,body",
-        "$top": 10 # only 10 emails
+        "$select": "body", # can add subject, sender, etc. if needed
+        "$top": 50 # fetch more if needed
     }
 
     response = requests.get(GRAPH_ENDPOINT, headers=headers, params=params)
@@ -48,20 +48,20 @@ def read_emails(access_token):
 
     emails = response.json().get("value", [])
 
-    print("\nEMAIL RESULTS\n")
+    # print("\nEMAIL RESULTS\n")
 
-    for i, email in enumerate(emails, start=1):
-        subject = email.get("subject", "No Subject")
-        sender = email.get("from", {}).get("emailAddress", {}).get("address", "Unknown")
-        received = email.get("receivedDateTime", "Unknown")
-        body = email.get("body", {}).get("content", "")
+    # for i, email in enumerate(emails, start=1):
+    #     subject = email.get("subject", "No Subject")
+    #     sender = email.get("from", {}).get("emailAddress", {}).get("address", "Unknown")
+    #     received = email.get("receivedDateTime", "Unknown")
+    #     body = email.get("body", {}).get("content", "")
 
-        print(f"Email #{i}")
-        print(f"From: {sender}")
-        print(f"Subject: {subject}")
-        print(f"Received: {received}")
-        print("Body:")
-        print(body)
+    #     print(f"Email #{i}")
+    #     print(f"From: {sender}")
+    #     print(f"Subject: {subject}")
+    #     print(f"Received: {received}")
+    #     print("Body:")
+    #     print(body)
     return emails
 
 
