@@ -49,6 +49,7 @@ def parse_registration_email(email_body: str) -> dict:
     location_match = re.search(r"Location[:=\-]?\s*([A-Za-z0-9,.\s]+)", email_body, re.IGNORECASE)
 
     return {
+        "email_type": "registration",
         "name": name_match.group(1).strip() if name_match else "",
         "phone": normalize_phone(phone_match.group(1)) if phone_match else "",
         "email": email_match.group(1).strip().lower() if email_match else "",
@@ -69,11 +70,32 @@ def parse_payment_email(email_body: str) -> dict:
     transaction_match = re.search(r"Transaction ID[:=\-]?\s*(.+?)(?:\n|$)", email_body, re.IGNORECASE)
 
     return {
+        "email_type": "payment",
         "name": name_match.group(1).strip() if name_match else "",
         "phone": normalize_phone(phone_match.group(1)) if phone_match else "",
         "email": email_match.group(1).strip().lower() if email_match else "",
         "transaction_id": transaction_match.group(1).strip() if transaction_match else "",
         "payment_status": "Paid"
+    }
+
+def parse_atlas_notification_email(email_body: str) -> dict:
+    """
+    Parse Atlas enrollment notification emails and mark them as Atlas notifications.
+    """
+    email_body = normalize_email_body(email_body)
+
+    # Extract instructor name after "Dear"
+    instructor_match = re.search(r"Dear\s+([A-Za-z\s]+)", email_body)
+
+    # Extract course name and date
+    course_match = re.search(r"requests for (.+?) on", email_body, re.IGNORECASE)
+    date_match = re.search(r"on (\d{2}/\d{2}/\d{4})", email_body)
+
+    return {
+        "email_type": "atlas_notification",  # <-- flag to mark this as Atlas notification
+        "instructor_name": instructor_match.group(1).strip() if instructor_match else "",
+        "course": course_match.group(1).strip() if course_match else "",
+        "date": date_match.group(1).strip() if date_match else ""
     }
 
 def parse_notification_email_flexible(email_body: str) -> dict:
@@ -100,6 +122,13 @@ def process_emails(messages, source_type="AHA"):
     for msg in messages:
         email_body = normalize_email_body(msg.get("body", {}).get("content") or msg.get("bodyPreview", ""))
 
+        # for atlas notifications
+        if "incoming class enrollment requests" in email_body.lower():
+            # Use the dedicated Atlas parser
+            atlas_record = parse_atlas_notification_email(email_body)
+            all_records.append(atlas_record)  # Keep as separate record
+            continue  # skip the normal registration/payment parsing for this email
+        
         # Parse registration info
         reg_record = parse_registration_email(email_body)
         email_lower = reg_record.get("email")
@@ -145,7 +174,8 @@ def process_emails(messages, source_type="AHA"):
 if __name__ == "__main__":
     test_messages = [
         {"bodyPreview": "<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>Course: BLS</p><p>Date: 2026/02/19</p><p>Location: Sacramento, CA</p>"},
-        {"bodyPreview": "<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>Transaction ID: 67676</p>"}
+        {"bodyPreview": "<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>Transaction ID: 67676</p>"},
+        {"bodyPreview": "<p>Dear Test,</p><p>You have one or more incoming class enrollment requests for BLS Provider Course on 05/04/2026.</p><p>Sincerely,</p><p>AHA Atlas Support</p>"}
     ]
 
     records = process_emails(test_messages)
@@ -156,3 +186,4 @@ if __name__ == "__main__":
         for key, value in r.items():
             print(f"{key}: {value}")
         print("-" * 40)
+    #    atlas_emails = [r for r in records if r.get("email_type") == "atlas_notification"]
