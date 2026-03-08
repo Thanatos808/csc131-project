@@ -92,7 +92,7 @@ def parse_atlas_notification_email(email_body: str) -> dict:
     date_match = re.search(r"on (\d{2}/\d{2}/\d{4})", email_body)
 
     return {
-        "email_type": "atlas_notification",  # <-- flag to mark this as Atlas notification
+        "email_type": "atlas_notification", # Used to distinguish from normal registration/payment emails
         "instructor_name": instructor_match.group(1).strip() if instructor_match else "",
         "course": course_match.group(1).strip() if course_match else "",
         "date": date_match.group(1).strip() if date_match else ""
@@ -122,12 +122,12 @@ def process_emails(messages, source_type="AHA"):
     for msg in messages:
         email_body = normalize_email_body(msg.get("body", {}).get("content") or msg.get("bodyPreview", ""))
 
-        # for atlas notifications
+        # Atlas notifications
         if "incoming class enrollment requests" in email_body.lower():
             # Use the dedicated Atlas parser
             atlas_record = parse_atlas_notification_email(email_body)
             all_records.append(atlas_record)  # Keep as separate record
-            continue  # skip the normal registration/payment parsing for this email
+            continue  # Skip the normal registration/payment parsing for this email
         
         # Parse registration info
         reg_record = parse_registration_email(email_body)
