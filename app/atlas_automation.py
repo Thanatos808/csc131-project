@@ -10,7 +10,7 @@ USERNAME = "Sacstatecpr@outlook.com"
 PASSWORD = "ssCPR123*"
 
 # TO DO !!!!
-# input data from email instead of hardcoding. will be done integrated w/ graph api
+# need to account for non-BLS courses
 # add error handling and retries for each step
 # 
 def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
