@@ -12,7 +12,7 @@ PASSWORD = "ssCPR123*"
 # TO DO !!!!
 # need to account for non-BLS courses
 # add error handling and retries for each step
-# 
+# account for phone number
 def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
     
     INSTRUCTOR_NAME = instructor_name
@@ -125,5 +125,8 @@ def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
         "course_date": date_str,
         "instructor": instructor_name
     }
-
+# if __name__ == "__main__":
+#     with sync_playwright() as playwright:
+#         result = run(playwright, "Sac", "02/09/2026")
+#         print(result)
 # playwright codegen https://atlas.heart.org
