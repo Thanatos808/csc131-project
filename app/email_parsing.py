@@ -2,7 +2,7 @@
 
 import re
 from html import unescape
-
+from datetime import datetime
 # Helper Functions
 
 def strip_html(html_text: str) -> str:
@@ -49,6 +49,18 @@ def normalize_course(course_text: str) -> str:
 
     return course_text
 
+def normalize_date(date_text: str) -> str:
+    """MM/DD/YY format"""
+    try:
+        date_obj = datetime.strptime(date_text.split("(")[0].strip(), "%A, %B %d, %Y %I:%M%p")
+        return date_obj.strftime("%m/%d/%y")
+    except:
+        return date_text
+    
+def create_unique_key(record):
+    """Give each registration a unique key."""
+    return f"{record.get('email','')}|{record.get('date','')}|{record.get('course','')}"
+
 # Email Parsing Functions
 
 def parse_registration_email(email_body: str) -> dict:
@@ -75,8 +87,8 @@ def parse_registration_email(email_body: str) -> dict:
         "name": name_match.group(1).strip() if name_match else "",
         "phone": normalize_phone(phone_match.group(1)) if phone_match else "",
         "email": email_match.group(1).strip().lower() if email_match else "",
-        "course": course_match.group(1).strip() if course_match else "",
-        "date": date_match.group(1).strip() if date_match else "",
+        "course": normalize_course(course_match.group(1)) if course_match else "",
+        "date": normalize_date(date_match.group(1)) if date_match else "",
         "location": location_match.group(1).strip() if location_match else "",
         "aha_registered": "Y",
         "payment_status": "Pending",
@@ -155,8 +167,12 @@ def process_emails(messages, source_type="AHA"):
         reg_record = parse_registration_email(email_body)
         email_lower = reg_record.get("email")
 
+        # Generate unique key
+        unique_key = create_unique_key(reg_record)
+        reg_record["unique_key"] = unique_key
+
         # Skip duplicates
-        if email_lower in emails_seen:
+        if unique_key in emails_seen:
             continue
 
         # Merge notification info if present
@@ -180,13 +196,12 @@ def process_emails(messages, source_type="AHA"):
 
         # Append registration
         all_records.append(reg_record)
-        if email_lower:
-            emails_seen.add(email_lower)
+        emails_seen.add(unique_key)
 
         # Parse payment info and merge if email exists
         pay_record = parse_payment_email(email_body)
         pay_email_lower = pay_record.get("email")
-        if pay_email_lower in emails_seen and pay_record.get("transaction_id"):
+        if pay_email_lower and pay_record.get("transaction_id"):
             for r in all_records:
                 if r.get("email") == pay_email_lower:
                     r.update(pay_record)
