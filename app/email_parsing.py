@@ -15,8 +15,7 @@ def strip_html(html_text: str) -> str:
 
 def normalize_email_body(email_body: str) -> str:
     """Normalize email body: strip HTML, collapse whitespace."""
-    text = strip_html(email_body)
-    text = re.sub(r"\s+", " ", text)                # Collapse multiple whitespace
+    text = strip_html(email_body)                # Collapse multiple whitespace
     return text.strip()
 
 def normalize_phone(phone: str) -> str:
@@ -29,6 +28,27 @@ def normalize_phone(phone: str) -> str:
     else:
         return digits  # return as-is if unexpected format
 
+def normalize_course(course_text: str) -> str:
+    """Map course text to standardized course names."""
+    text = course_text.lower()
+
+    if "bls" in text and "skills" in text:
+        return "HeartCode BLS Skills - 2026"
+    elif "bls" in text:
+        return "HeartCode BLS Complete - 2026"
+
+    if "acls" in text and "skills" in text:
+        return "HeartCode ACLS Skills - 2026"
+    elif "acls" in text:
+        return "HeartCode ACLS Complete - 2026"
+
+    if "pals" in text and "skills" in text:
+        return "HeartCode PALS Skills - 2026"
+    elif "pals" in text:
+        return "HeartCode PALS Complete - 2026"
+
+    return course_text
+
 # Email Parsing Functions
 
 def parse_registration_email(email_body: str) -> dict:
@@ -36,17 +56,19 @@ def parse_registration_email(email_body: str) -> dict:
     email_body = normalize_email_body(email_body)
 
     # Remove admin-only sections if present
-    admin_section = re.search(r"The info below is just sent to you as the admin(.+)", email_body, re.IGNORECASE)
-    if admin_section:
-        email_body = admin_section.group(1)
+    admin_section = re.search(r"The info below is just sent to you as the admin(.+)", email_body, re.IGNORECASE | re.DOTALL)
+    if not admin_section:
+        return {} # No admin section, not a registration email
+    
+    admin_body = admin_section.group(1)
 
     # Extract fields
-    name_match = re.search(r"Name[:=\-]?\s*([A-Za-z\s]+?)(?=\s*(Phone|Email|Course|Date|Location|$))", email_body, re.IGNORECASE)
-    phone_match = re.search(r"Phone[:=\-]?\s*([\+\d\-\(\)\s]+)", email_body, re.IGNORECASE)
-    email_match = re.search(r"Email[:=\-]?\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})", email_body, re.IGNORECASE)
-    course_match = re.search(r"(?:Course|Class)[:=\-]?\s*([A-Za-z0-9\s]+)", email_body, re.IGNORECASE)
-    date_match = re.search(r"Date[:=\-]?\s*(\d{4}/\d{2}/\d{2}|\d{2}/\d{2}/\d{4})", email_body)
-    location_match = re.search(r"Location[:=\-]?\s*([A-Za-z0-9,.\s]+)", email_body, re.IGNORECASE)
+    name_match = re.search(r"Name:\s*([^\n]+)", admin_body)
+    phone_match = re.search(r"Phone:\s*([^\n]+)", admin_body)
+    email_match = re.search(r"Email:\s*([^\n]+)", admin_body)
+    course_match = re.search(r"What\s+([^\n]+)", email_body, re.IGNORECASE)
+    date_match = re.search(r"When\s+([^\n]+)", email_body, re.IGNORECASE)
+    location_match = re.search(r"Where\s+([^\n]+)", email_body, re.IGNORECASE)
 
     return {
         "email_type": "registration",
@@ -175,7 +197,47 @@ if __name__ == "__main__":
     test_messages = [
         {"bodyPreview": "<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>Course: BLS</p><p>Date: 2026/02/19</p><p>Location: Sacramento, CA</p>"},
         {"bodyPreview": "<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>Transaction ID: 67676</p>"},
-        {"bodyPreview": "<p>Dear Test,</p><p>You have one or more incoming class enrollment requests for BLS Provider Course on 05/04/2026.</p><p>Sincerely,</p><p>AHA Atlas Support</p>"}
+        {"bodyPreview": "<p>Dear Test,</p><p>You have one or more incoming class enrollment requests for BLS Provider Course on 05/04/2026.</p><p>Sincerely,</p><p>AHA Atlas Support</p>"},
+        {
+        "bodyPreview": """
+        Scheduled by a client 
+
+        Appointment Scheduled for Claire Pallones
+
+        What Online BLS with Skills Check (CPR Lifeline Atlanta, Chamblee)
+        When Wednesday, March 4, 2026 10:00am (1 hour)
+        Where 2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341
+
+        The info below is just sent to you as the admin
+
+        Name: Claire Pallones
+        Phone: +14708848238
+        Email: clairempallones@gmail.com
+        Price: $100.00
+        Paid Online: $100.00
+
+        Location
+        ============
+        2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341
+
+        Address
+        ============
+        Street Address Line 1
+        3450 Blair Circle S
+
+        Street Address Line 2
+        Unit 5302
+
+        City
+        ATLANTA
+
+        State
+        GA
+
+        ZIP
+        30319
+        """
+    }
     ]
 
     records = process_emails(test_messages)
