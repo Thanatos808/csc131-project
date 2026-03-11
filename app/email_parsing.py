@@ -3,6 +3,10 @@
 import re
 from html import unescape
 from datetime import datetime
+
+# TODO
+# add fixed location names for known addresses (ex: 2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341 = GA Chamblee)
+
 # Helper Functions
 
 def strip_html(html_text: str) -> str:
@@ -210,8 +214,8 @@ def process_emails(messages, source_type="AHA"):
 # Demo / Test Run
 if __name__ == "__main__":
     test_messages = [
-        {"bodyPreview": "<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>Course: BLS</p><p>Date: 2026/02/19</p><p>Location: Sacramento, CA</p>"},
-        {"bodyPreview": "<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>Transaction ID: 67676</p>"},
+        {"bodyPreview": "The info below is just sent to you as the admin<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>What BLS Provider Course</p><p>When Wednesday, March 4, 2026 10:00am (1 hour) Where 	2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341"},
+        {"bodyPreview": "The info below is just sent to you as the admin<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>What BLS Provider Course</p><p>When Wednesday, March 4, 2026 10:00am (1 hour) Where 	2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341"},
         {"bodyPreview": "<p>Dear Test,</p><p>You have one or more incoming class enrollment requests for BLS Provider Course on 05/04/2026.</p><p>Sincerely,</p><p>AHA Atlas Support</p>"},
         {
         "bodyPreview": """

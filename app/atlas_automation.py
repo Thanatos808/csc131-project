@@ -13,6 +13,8 @@ PASSWORD = "ssCPR123*"
 # need to account for non-BLS courses
 # add error handling and retries for each step
 # account for phone number
+# additional option of instructor id search instead of name
+
 def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
     
     INSTRUCTOR_NAME = instructor_name
