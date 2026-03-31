@@ -14,6 +14,11 @@ PAID_KEYWORDS = [
     "payment confirmation",
     "thank you for your payment",
     "payment received"
+    "purchase details",
+    "payment date",
+    "payment source",
+    "payment description",
+    "success"
 
 ]
 
@@ -79,7 +84,8 @@ def parse_payment_email(raw_text):
         r"Transaction\s*ID[:\s]+([A-Za-z0-9\-]+)",
         r"Order\s*(?:ID|#)[:\s]+([A-Za-z0-9\-]+)",
         r"Receipt\s*(?:ID|#)[:\s]+([A-Za-z0-9\-]+)",
-        r"Confirmation\s*(?:ID|#)[:\s]+([A-Za-z0-9\-]+)"  
+        r"Confirmation\s*(?:ID|#)[:\s]+([A-Za-z0-9\-]+)",  
+        r"Payment\s*(?:ID|#)[:\s]+([A-Za-z0-9\-]+)"
 
     ]
 
@@ -110,7 +116,7 @@ def parse_payment_email(raw_text):
 
     amount = None
 
-    amount_patters = [
+    amount_patterns = [
 
         #list of typical patterns to print how much something costs
 
@@ -120,8 +126,8 @@ def parse_payment_email(raw_text):
 
     ]
 
-    for pattern in amount_patters:
-        m - re.search(pattern, text, flags=re.IGNORECASE)
+    for pattern in amount_patterns:
+        m = re.search(pattern, text, flags=re.IGNORECASE)
         if m:
             amount = m.group(1).strip()
             break
@@ -134,7 +140,7 @@ def parse_payment_email(raw_text):
 
         "full_name": full_name,
         "email": email,
-        "payment": payment_status,
+        "payment_status": payment_status,
         "transaction_id": transaction_id,
         "amount": amount,
         "raw_detected": raw_detected
