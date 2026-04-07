@@ -12,7 +12,7 @@ SCOPES = ['https://graph.microsoft.com/Mail.Read', 'https://graph.microsoft.com/
 GRAPH_ENDPOINT = "https://graph.microsoft.com/v1.0/me/messages" # graph api
 
 
-def get_access_token():
+def get_access_token(log=print):
     app = msal.PublicClientApplication(
         CLIENT_ID,
         authority=AUTHORITY
@@ -20,7 +20,7 @@ def get_access_token():
 
     flow = app.initiate_device_flow(scopes = SCOPES)  # oauth device flow
 
-    print(flow["message"])  # Shows login instructions
+    log(flow["message"])  # Shows login instructions
 
     result = app.acquire_token_by_device_flow(flow)
 
