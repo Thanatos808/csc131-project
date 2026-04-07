@@ -105,7 +105,7 @@ def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
     # navigate through action menu to accept the student
     page.get_by_test_id("kebab-items-0").click()
     page.get_by_test_id("action-menus-0-0").click()
-    page.get_by_test_id("acceptbutton").click()
+    page.get_by_test_id("acceptbutton").first.click()
     page.get_by_test_id("acceptBtn").click()
 
     # get email and name
