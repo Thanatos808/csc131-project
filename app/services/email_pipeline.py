@@ -1,7 +1,7 @@
-from app.services.read_emails import get_access_token, read_emails
-from app.services.email_parsing import process_emails
+from read_emails import get_access_token, read_emails
+from email_parsing import process_emails
 import requests
-from app.services.atlas_automation import run as atlas_run
+from atlas_automation import run as atlas_run
 from playwright.sync_api import Playwright, sync_playwright
 
 def run_email_pipeline(): 
