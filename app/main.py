@@ -6,6 +6,7 @@ from app.ui.Dashboard import renderDashboard
 from app.ui.Intake import renderIntake
 from app.ui.StudentDetail import renderStudentDetail
 from app.ui.Export import renderExport
+from app.services.email_pipeline import run_email_pipeline
 
 def main():
     #configure overall app settings
