@@ -106,7 +106,7 @@ def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
     page.get_by_test_id("kebab-items-0").click()
     page.get_by_test_id("action-menus-0-0").click()
     page.get_by_test_id("acceptbutton").first.click()
-    page.get_by_test_id("acceptBtn").click()
+    page.get_by_test_id("acceptBtn").first.click()
 
     # get email and name
     email_locator = page.locator("div.dynamicTable_rtlBorderRight__A69BQ").first
