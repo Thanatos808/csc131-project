@@ -4,7 +4,7 @@ import requests
 from app.atlas_automation import run as atlas_run
 from playwright.sync_api import Playwright, sync_playwright
 
-def main(): 
+def run_email_pipeline(): 
 
     # Step 1: Get access token + fetch emails
     token = get_access_token()
@@ -39,6 +39,7 @@ def main():
     print("\n=== Registration Results ===\n")
     for r in results:
         print(r)
+    return results, records
     # Print extracted records
 
     # print("\nAll extracted records:\n")
@@ -51,4 +52,4 @@ def main():
     #     print("-" * 40)
 
 if __name__ == "__main__":
-    main()
+    run_email_pipeline()
