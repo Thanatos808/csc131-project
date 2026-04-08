@@ -119,3 +119,6 @@ def append_row_to_sheet(gc, sheet_id: str, tab_name: str, row_dict: Dict, column
 
     values = [row_dict.get(col, "") for col in columns]
     ws.append_row(values, value_input_option="USER_ENTERED")
+    
+if __name__ == "__main__":
+    main()
