@@ -3,6 +3,7 @@ from app.services.email_parsing import process_emails
 from app.services.atlas_automation import run as atlas_run
 import requests
 from playwright.sync_api import Playwright, sync_playwright
+from app.services.record_formatter import format_for_intake
 
 def run_email_pipeline(log=print): 
 
