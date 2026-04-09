@@ -4,6 +4,8 @@ from app.services.atlas_automation import run as atlas_run
 import requests
 from playwright.sync_api import Playwright, sync_playwright
 from app.services.record_formatter import format_for_intake
+from app.ui.Intake import send_to_intake
+import streamlit as st
 
 def run_email_pipeline(log=print): 
 
@@ -24,7 +26,34 @@ def run_email_pipeline(log=print):
 
     log(f"Processing {len(messages)} filtered emails...\n")
     records = process_emails(messages)
+    # TODO: Seperate Atlas automation and intake workflows
+    log("\nSending registrations to intake...\n")
 
+    for record in records:
+
+        # Only process real student registrations
+        if record.get("email_type") != "registration":
+            continue
+
+        # Skip incomplete records
+        if not record.get("email"):
+            continue
+
+        parsed_student = format_for_intake(record)
+
+        log(f"Sending {parsed_student['student_name']} to intake...")
+
+        try:
+            sheet_id = st.session_state.get("sheet_id", "")
+            tab_name = st.session_state.get("tab_name", "Sheet1")
+            if not sheet_id:
+                log(f"Skipping {parsed_student['student_name']} - no Sheet ID configured.")
+                continue
+            send_to_intake(parsed_student, sheet_id, tab_name)
+
+        except Exception as e:
+            log(f"Error sending to intake: {e}")
+    log("Intake completed.")
     # Step 3: Run Atlas automation to register students
     log("\nRunning Atlas automation...\n")
     atlas_emails = [r for r in records if r.get("email_type") == "atlas_notification"] # Atlas notifications ONLY
