@@ -15,15 +15,22 @@ def renderEmailAutomation():
             "Google Sheet ID (from the URL)",
             placeholder="Example: 1AbCDeFgHiJkLmNoPq..."
         )
-        tab_name_input = st.text_input(
-            "Tab Name",
+        tab_name_input_1 = st.text_input(
+            "Registration Info",
             value="Sheet1"
+        )
+        tab_name_input_2 = st.text_input(
+        "Atlas Website Info",
+        value="Sheet2"
         )
         submitted_sheet = st.form_submit_button("Save Sheet Info")
 
     if submitted_sheet:
         st.session_state["sheet_id"] = sheet_id_input.strip()
-        st.session_state["tab_name"] = tab_name_input.strip()
+        st.session_state["tab_names"] = [
+            tab_name_input_1.strip(), 
+            tab_name_input_2.strip()
+            ]
         st.success("Google Sheets configuration saved!")
     # email pipeline
     if st.button("Run Email Processing + Atlas Automation"):
