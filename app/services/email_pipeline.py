@@ -1,5 +1,5 @@
 from app.services.read_emails import get_access_token, read_emails
-from app.services.email_parsing import process_emails
+from app.services.email_parsing import process_emails, parse_registration_email, parse_atlas_notification_email
 from app.services.atlas_automation import run as atlas_run
 import requests
 from playwright.sync_api import Playwright, sync_playwright
@@ -18,10 +18,17 @@ def run_email_pipeline(log=print):
     # Step 2: Filter and prepare messages
     messages = []
     for e in emails:
-        content = e.get("body", {}).get("content", "")
-        content_lower = content.lower()
-        # Only include emails likely containing registrations
-        if "course" in content_lower or "enrollment" in content_lower:
+        body = e.get("body", {}).get("content", "")
+
+
+        # Try parsing as registration
+        reg = parse_registration_email(body)
+
+        # Try parsing as atlas
+        atlas = parse_atlas_notification_email(body)
+
+        # only appends email matching atlas or registration
+        if reg or atlas:
             messages.append({"body": e.get("body", {})})
 
     log(f"Processing {len(messages)} filtered emails...\n")
@@ -85,9 +92,9 @@ def run_email_pipeline(log=print):
             # valid dics only
             if not isinstance(result, dict):
                 continue
-
+            parsed_student = format_for_intake(result)
             try:
-                send_to_intake(result, sheet_id, tab_name_atlas)
+                send_to_intake(parsed_student, sheet_id, tab_name_atlas)
 
             except Exception as e:
                 log(f"Error sending Atlas result to sheet: {e}")
