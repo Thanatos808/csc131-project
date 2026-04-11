@@ -26,33 +26,38 @@ def run_email_pipeline(log=print):
 
     log(f"Processing {len(messages)} filtered emails...\n")
     records = process_emails(messages)
+
+    tab_names = st.session_state.get("tab_names", ["Sheet1", "Sheet2"])
+    tab_name_intake = tab_names[0]
+    tab_name_atlas = tab_names[1] if len(tab_names) > 1 else "Sheet2"
+
     # TODO: Seperate Atlas automation and intake workflows
     log("\nSending registrations to intake...\n")
 
-    for record in records:
+    sheet_id = st.session_state.get("sheet_id", "")
+    if not sheet_id:
+        log("No Sheet ID configured. Skipping intake processing.")
+    else:
+        for record in records:
 
-        # Only process real student registrations
-        if record.get("email_type") != "registration":
-            continue
-
-        # Skip incomplete records
-        if not record.get("email"):
-            continue
-
-        parsed_student = format_for_intake(record)
-
-        log(f"Sending {parsed_student['student_name']} to intake...")
-
-        try:
-            sheet_id = st.session_state.get("sheet_id", "")
-            tab_name = st.session_state.get("tab_name", "Sheet1")
-            if not sheet_id:
-                log(f"Skipping {parsed_student['student_name']} - no Sheet ID configured.")
+            # Only process real student registrations
+            if record.get("email_type") != "registration":
                 continue
-            send_to_intake(parsed_student, sheet_id, tab_name)
 
-        except Exception as e:
-            log(f"Error sending to intake: {e}")
+            # Skip incomplete records
+            if not record.get("email"):
+                continue
+
+            parsed_student = format_for_intake(record)
+
+            log(f"Sending {parsed_student['student_name']} to intake...")
+
+            try:
+                send_to_intake(parsed_student, sheet_id, tab_name_intake)
+
+            except Exception as e:
+                log(f"Error sending to intake: {e}")
+   
     log("Intake completed.")
     # Step 3: Run Atlas automation to register students
     log("\nRunning Atlas automation...\n")
@@ -68,7 +73,24 @@ def run_email_pipeline(log=print):
                 results.append(result)
             except Exception as e: # Catch errors to allow processing other emails
                 log(f"Error registering: {e}")
-                results.append(str(e))
+                #results.append(str(e))
+                continue
+
+    log("\nSending Atlas results to Sheet2...\n")
+    sheet_id = st.session_state.get("sheet_id", "")
+    if not sheet_id:
+        log("No Sheet ID configured. Skipping Atlas upload.")
+    else:
+        for result in results:
+            # valid dics only
+            if not isinstance(result, dict):
+                continue
+
+            try:
+                send_to_intake(result, sheet_id, tab_name_atlas)
+
+            except Exception as e:
+                log(f"Error sending Atlas result to sheet: {e}")
     print("\n=== Registration Results ===\n")
     for r in results:
         print(r)
