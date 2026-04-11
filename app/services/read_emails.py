@@ -38,7 +38,7 @@ def read_emails(access_token):
 
     params = {
         "$select": "body", # can add subject, sender, etc. if needed
-        "$top": 50 # fetch more if needed
+        "$top": 10 # fetch more if needed
     }
 
     response = requests.get(GRAPH_ENDPOINT, headers=headers, params=params)
@@ -47,25 +47,22 @@ def read_emails(access_token):
         raise Exception(f"Graph API Error: {response.status_code}\n{response.text}")
 
     emails = response.json().get("value", [])
-
-    # print("\nEMAIL RESULTS\n")
-
-    # for i, email in enumerate(emails, start=1):
-    #     subject = email.get("subject", "No Subject")
-    #     sender = email.get("from", {}).get("emailAddress", {}).get("address", "Unknown")
-    #     received = email.get("receivedDateTime", "Unknown")
-    #     body = email.get("body", {}).get("content", "")
-
-    #     print(f"Email #{i}")
-    #     print(f"From: {sender}")
-    #     print(f"Subject: {subject}")
-    #     print(f"Received: {received}")
-    #     print("Body:")
-    #     print(body)
     return emails
 
 
 if __name__ == "__main__":
     token = get_access_token()
     emails = read_emails(token)
-    #print(emails)
+    print("\nEMAIL RESULTS\n")
+    for i, email in enumerate(emails, start=1):
+        subject = email.get("subject", "No Subject")
+        sender = email.get("from", {}).get("emailAddress", {}).get("address", "Unknown")
+        received = email.get("receivedDateTime", "Unknown")
+        body = email.get("body", {}).get("content", "")
+
+        print(f"Email #{i}")
+        print(f"From: {sender}")
+        print(f"Subject: {subject}")
+        print(f"Received: {received}")
+        print("Body:")
+        print(body)
