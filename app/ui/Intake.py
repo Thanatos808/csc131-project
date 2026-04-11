@@ -1,6 +1,6 @@
 import streamlit as st
 from datetime import datetime
-
+from typing import List, Dict
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -39,14 +39,33 @@ def append_student_to_sheet(student: dict, sheet_id: str, tab_name: str):
     ws.append_row(row, value_input_option="USER_ENTERED")
 
 
+def send_to_intake(student: Dict, sheet_id: str, tab_name: str = "Sheet1"):
+    """
+    Upload a single student to Google Sheets AND mark as completed in Streamlit session_state (if available).
+    """
+    if not sheet_id:
+        raise ValueError("No Sheet ID provided to send_to_intake.")
+
+    # Upload to Google Sheet
+    append_student_to_sheet(student, sheet_id, tab_name)
+    if "students" not in st.session_state: # make sure it exists
+        st.session_state["students"] = []
+    if "students" in st.session_state:
+        # searches existing students
+        for s in st.session_state["students"]:
+            if s.get("email") == student.get("email"):
+                s["completed"] = True
+                break
+    else:
+        # adds new students
+        new_entry = student.copy()
+        new_entry["completed"] = True
+        st.session_state["students"].append(new_entry)
+
 def renderIntake():
     st.title("Intake")
-
-    
     if "students" not in st.session_state:
         st.session_state["students"] = []
-
-    
     if "sheet_id" not in st.session_state:
         st.session_state["sheet_id"] = ""
     if "tab_name" not in st.session_state:
@@ -86,10 +105,8 @@ def renderIntake():
             "received_datetime": datetime.now().isoformat(timespec="seconds"),
         }
 
-        
         st.session_state["students"].append(new_student)
 
-       
         sheet_id = st.session_state["sheet_id"].strip()
         tab_name = st.session_state["tab_name"].strip()
 
@@ -103,7 +120,6 @@ def renderIntake():
         else:
             st.success("Student added locally  (add Sheet ID to auto-upload)")
 
-   
     if st.session_state["students"]:
         st.subheader("Students collected so far")
         st.dataframe(st.session_state["students"], use_container_width=True)

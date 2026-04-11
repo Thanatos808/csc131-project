@@ -1,0 +1,269 @@
+# email_parsing.py - CSC 131
+
+import re
+from html import unescape
+from datetime import datetime
+
+# TODO
+# add fixed location names for known addresses (ex: 2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341 = GA Chamblee)
+
+# Helper Functions
+
+def strip_html(html_text: str) -> str:
+    """Remove HTML tags, unescape entities, keep text clean."""
+    text = re.sub(r"<[^>]+>", "\n", html_text)       # Replace HTML tags with newline
+    text = re.sub(r"\n+", "\n", text)                # Collapse multiple newlines
+    text = unescape(text).strip()                    # Unescape HTML entities
+    text = re.sub(r"=+", "", text)                   # Remove repeated '='
+    return text
+
+def normalize_email_body(email_body: str) -> str:
+    """Normalize email body: strip HTML, collapse whitespace."""
+    text = strip_html(email_body)                # Collapse multiple whitespace
+    return text.strip()
+
+def normalize_phone(phone: str) -> str:
+    """Normalize phone numbers to XXX-XXX-XXXX format if possible."""
+    digits = re.sub(r"[^\d]", "", phone or "")
+    if len(digits) == 10:
+        return f"{digits[:3]}-{digits[3:6]}-{digits[6:]}"
+    elif len(digits) == 7:  # Optional: local numbers without area code
+        return f"{digits[:3]}-{digits[3:]}"
+    else:
+        return digits  # return as-is if unexpected format
+
+def normalize_course(course_text: str) -> str:
+    """Map course text to standardized course names."""
+    text = course_text.lower()
+
+    if "bls" in text and "skills" in text:
+        return "HeartCode BLS Skills - 2026"
+    elif "bls" in text:
+        return "HeartCode BLS Complete - 2026"
+
+    if "acls" in text and "skills" in text:
+        return "HeartCode ACLS Skills - 2026"
+    elif "acls" in text:
+        return "HeartCode ACLS Complete - 2026"
+
+    if "pals" in text and "skills" in text:
+        return "HeartCode PALS Skills - 2026"
+    elif "pals" in text:
+        return "HeartCode PALS Complete - 2026"
+
+    return course_text
+
+def normalize_date(date_text: str) -> str:
+    """MM/DD/YY format"""
+    try:
+        date_obj = datetime.strptime(date_text.split("(")[0].strip(), "%A, %B %d, %Y %I:%M%p")
+        return date_obj.strftime("%m/%d/%y")
+    except:
+        return date_text
+    
+def create_unique_key(record):
+    """Give each registration a unique key."""
+    return f"{record.get('email','')}|{record.get('date','')}|{record.get('course','')}"
+
+# Email Parsing Functions
+
+def parse_registration_email(email_body: str) -> dict:
+    """Extract registration info from email body."""
+    email_body = normalize_email_body(email_body)
+
+    # Remove admin-only sections if present
+    admin_section = re.search(r"The info below is just sent to you as the admin(.+)", email_body, re.IGNORECASE | re.DOTALL)
+    if not admin_section:
+        return {} # No admin section, not a registration email
+    
+    admin_body = admin_section.group(1)
+
+    # Extract fields
+    name_match = re.search(r"Name:\s*([^\n]+)", admin_body)
+    phone_match = re.search(r"Phone:\s*([^\n]+)", admin_body)
+    email_match = re.search(r"Email:\s*([^\n]+)", admin_body)
+    course_match = re.search(r"What\s+([^\n]+)", email_body, re.IGNORECASE)
+    date_match = re.search(r"When\s+([^\n]+)", email_body, re.IGNORECASE)
+    location_match = re.search(r"Where\s+([^\n]+)", email_body, re.IGNORECASE)
+
+    return {
+        "email_type": "registration",
+        "name": name_match.group(1).strip() if name_match else "",
+        "phone": normalize_phone(phone_match.group(1)) if phone_match else "",
+        "email": email_match.group(1).strip().lower() if email_match else "",
+        "course": normalize_course(course_match.group(1)) if course_match else "",
+        "date": normalize_date(date_match.group(1)) if date_match else "",
+        "location": location_match.group(1).strip() if location_match else "",
+        "aha_registered": "Y",
+        "payment_status": "Pending",
+        "rqi_uploaded": "N",
+        "reminder_sent": "N"
+    }
+
+def parse_payment_email(email_body: str) -> dict:
+    """Extract payment info from email body."""
+    name_match = re.search(r"Name[:=\-]?\s*(.+?)(?:\n|$)", email_body, re.IGNORECASE)
+    phone_match = re.search(r"Phone[:=\-]?\s*(.+?)(?:\n|$)", email_body, re.IGNORECASE)
+    email_match = re.search(r"Email[:=\-]?\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})", email_body, re.IGNORECASE)
+    transaction_match = re.search(r"Transaction ID[:=\-]?\s*(.+?)(?:\n|$)", email_body, re.IGNORECASE)
+
+    return {
+        "email_type": "payment",
+        "name": name_match.group(1).strip() if name_match else "",
+        "phone": normalize_phone(phone_match.group(1)) if phone_match else "",
+        "email": email_match.group(1).strip().lower() if email_match else "",
+        "transaction_id": transaction_match.group(1).strip() if transaction_match else "",
+        "payment_status": "Paid"
+    }
+
+def parse_atlas_notification_email(email_body: str) -> dict:
+    """
+    Parse Atlas enrollment notification emails and mark them as Atlas notifications.
+    """
+    email_body = normalize_email_body(email_body)
+
+    # Extract instructor name after "Dear"
+    instructor_match = re.search(r"Dear\s+([A-Za-z\s]+)", email_body)
+
+    # Extract course name and date
+    course_match = re.search(r"requests for (.+?) on", email_body, re.IGNORECASE)
+    date_match = re.search(r"on (\d{2}/\d{2}/\d{4})", email_body)
+
+    return {
+        "email_type": "atlas_notification", # Used to distinguish from normal registration/payment emails
+        "instructor_name": instructor_match.group(1).strip() if instructor_match else "",
+        "course": course_match.group(1).strip() if course_match else "",
+        "date": date_match.group(1).strip() if date_match else ""
+    }
+
+def parse_notification_email_flexible(email_body: str) -> dict:
+    """Extract course and date from unstructured notification emails."""
+    email_body = normalize_email_body(email_body)
+    course_match = re.search(r"enrollment requests for (.+?) on", email_body, re.IGNORECASE)
+    date_match = re.search(r"on (\d{2}/\d{2}/\d{4})", email_body)
+
+    return {
+        "course": course_match.group(1).strip() if course_match else "",
+        "date": date_match.group(1).strip() if date_match else ""
+    }
+# Main Processing Function
+
+def process_emails(messages, source_type="AHA"):
+    """Process list of emails and extract registration/payment records."""
+    required_fields = ["name", "phone", "email", "course", "date", "location"]
+    emails_seen = set()
+    all_records = []
+
+    # System emails to ignore
+    system_emails = {"atlas.support@heart.org"}
+
+    for msg in messages:
+        email_body = normalize_email_body(msg.get("body", {}).get("content") or msg.get("bodyPreview", ""))
+
+        # Atlas notifications
+        if "incoming class enrollment requests" in email_body.lower():
+            # Use the dedicated Atlas parser
+            atlas_record = parse_atlas_notification_email(email_body)
+            all_records.append(atlas_record)  # Keep as separate record
+            continue  # Skip the normal registration/payment parsing for this email
+        
+        # Parse registration info
+        reg_record = parse_registration_email(email_body)
+        email_lower = reg_record.get("email")
+
+        # Generate unique key
+        unique_key = create_unique_key(reg_record)
+        reg_record["unique_key"] = unique_key
+
+        # Skip duplicates
+        if unique_key in emails_seen:
+            continue
+
+        # Merge notification info if present
+        notif = parse_notification_email_flexible(email_body)
+        if notif.get("course") and notif.get("date"):
+            reg_record.update({
+                "course": notif.get("course"),
+                "date": notif.get("date")
+            })
+            if email_lower in system_emails or not reg_record.get("name"):
+                reg_record["partial_record"] = True
+
+        # Skip emails with no usable info
+        if not reg_record.get("name") and not reg_record.get("email") and not reg_record.get("course"):
+            print(f"Skipping email with no usable student info: {email_lower or 'unknown'}")
+            continue
+
+        # Apply RQI defaults if needed
+        if source_type.upper() == "RQI":
+            reg_record.update({"aha_registered": "N", "payment_status": "Paid", "rqi_uploaded": "Y"})
+
+        # Append registration
+        all_records.append(reg_record)
+        emails_seen.add(unique_key)
+
+        # Parse payment info and merge if email exists
+        pay_record = parse_payment_email(email_body)
+        pay_email_lower = pay_record.get("email")
+        if pay_email_lower and pay_record.get("transaction_id"):
+            for r in all_records:
+                if r.get("email") == pay_email_lower:
+                    r.update(pay_record)
+
+    return all_records
+# Demo / Test Run
+if __name__ == "__main__":
+    test_messages = [
+        {"bodyPreview": "The info below is just sent to you as the admin<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>What BLS Provider Course</p><p>When Wednesday, March 4, 2026 10:00am (1 hour) Where 	2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341"},
+        {"bodyPreview": "The info below is just sent to you as the admin<p>Name: John Doe</p><p>Phone: 555-111-2222</p><p>Email: john@example.com</p><p>What BLS Provider Course</p><p>When Wednesday, March 4, 2026 10:00am (1 hour) Where 	2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341"},
+        {"bodyPreview": "<p>Dear Test,</p><p>You have one or more incoming class enrollment requests for BLS Provider Course on 05/04/2026.</p><p>Sincerely,</p><p>AHA Atlas Support</p>"},
+        {
+        "bodyPreview": """
+        Scheduled by a client 
+
+        Appointment Scheduled for Claire Pallones
+
+        What Online BLS with Skills Check (CPR Lifeline Atlanta, Chamblee)
+        When Wednesday, March 4, 2026 10:00am (1 hour)
+        Where 2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341
+
+        The info below is just sent to you as the admin
+
+        Name: Claire Pallones
+        Phone: +14708848238
+        Email: clairempallones@gmail.com
+        Price: $100.00
+        Paid Online: $100.00
+
+        Location
+        ============
+        2900 Chamblee Tucker Road, Building 11, Suite 100C, Chamblee, GA 30341
+
+        Address
+        ============
+        Street Address Line 1
+        3450 Blair Circle S
+
+        Street Address Line 2
+        Unit 5302
+
+        City
+        ATLANTA
+
+        State
+        GA
+
+        ZIP
+        30319
+        """
+    }
+    ]
+
+    records = process_emails(test_messages)
+
+    print("\nAll extracted records:\n")
+    for i, r in enumerate(records, 1):
+        print(f"Record #{i} (Full)" if not r.get("partial_record") else f"Record #{i} (Partial/System)")
+        for key, value in r.items():
+            print(f"{key}: {value}")
+        print("-" * 40)

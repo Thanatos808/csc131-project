@@ -1,11 +1,13 @@
+from typing import Dict, List
 import streamlit as st
 
 #import page render functions
-from app.ui.Home import renderHome
-from app.ui.Dashboard import renderDashboard
-from app.ui.Intake import renderIntake
-from app.ui.StudentDetail import renderStudentDetail
-from app.ui.Export import renderExport
+from ui.Home import renderHome
+from ui.Dashboard import renderDashboard
+from ui.Intake import renderIntake
+from ui.StudentDetail import renderStudentDetail
+from ui.Export import renderExport
+from ui.EmailAutomation import renderEmailAutomation
 
 def main():
     #configure overall app settings
@@ -18,6 +20,7 @@ def main():
         "Intake": renderIntake,
         "Student Detail": renderStudentDetail,
         "Export": renderExport,
+        "Email Automation": renderEmailAutomation,
     }
 
     #initialize current page in session state
@@ -41,5 +44,5 @@ def main():
 
     pageOptions[selectedPage]()
 
-if __name__== "__main__":
+if __name__ == "__main__":
     main()
