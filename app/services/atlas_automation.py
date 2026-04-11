@@ -123,12 +123,12 @@ def run(playwright: Playwright, instructor_name: str, date_str: str) -> None:
     return {
         "name": name,
         "email": email,
-        "discipline": bls_span_text,
-        "course_date": date_str,
+        "course": bls_span_text,
+        "date": date_str,
         "instructor": instructor_name
     }
-# if __name__ == "__main__":
-#     with sync_playwright() as playwright:
-#         result = run(playwright, "Sac", "02/09/2026")
-#         print(result)
+if __name__ == "__main__":
+    with sync_playwright() as playwright:
+        result = run(playwright, "Sac", "02/09/2026")
+        print(result)
 # playwright codegen https://atlas.heart.org
