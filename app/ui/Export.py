@@ -1,8 +1,12 @@
 import csv
 import json
+import io
 from typing import Dict, List
 
 import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
+from app.services.email_pipeline import run_email_pipeline
 
 
 AHA_COLUMNS: List[str] = [
@@ -29,112 +33,214 @@ RQI_COLUMNS: List[str] = [
     "source_internet_message_id",
 ]
 
-
-def map_to_aha(fields: Dict, meta: Dict) -> Dict:
-    return {
-        "student_name": fields.get("student_name", "") or "",
-        "email": fields.get("email", "") or "",
-        "phone": fields.get("phone", "") or "",
-        "course": fields.get("course", "") or "",
-        "class_date": fields.get("class_date", "") or "",
-        "location": fields.get("location", "") or "",
-        "payment_status": meta.get("payment_status", "unknown") or "unknown",
-        "received_datetime": meta.get("received_datetime", "") or "",
-        "source_subject": meta.get("source_subject", "") or "",
-        "source_internet_message_id": meta.get("internet_message_id", "") or "",
-    }
-
-
-def map_to_rqi(fields: Dict, meta: Dict) -> Dict:
-    return {
-        "student_name": fields.get("student_name", "") or "",
-        "email": fields.get("email", "") or "",
-        "course": fields.get("course", "") or "",
-        "rqi_required": "yes",
-        "status": "pending",
-        "notes": "",
-        "received_datetime": meta.get("received_datetime", "") or "",
-        "source_internet_message_id": meta.get("internet_message_id", "") or "",
-    }
+RAW_COLUMNS: List[str] = [
+    "student_name",
+    "email",
+    "phone",
+    "course",
+    "class_date",
+    "location",
+    "received_datetime",
+    "payment_status",
+    "source_subject",
+    "source_internet_message_id",
+    "status",
+    "notes",
+    "rqi_required",
+]
 
 
-def export_to_csv(rows: List[Dict], path: str, columns: List[str]) -> None:
-    with open(path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=columns)
-        writer.writeheader()
-        for r in rows:
-            writer.writerow({c: r.get(c, "") for c in columns})
+def get_gspread_client():
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    creds = Credentials.from_service_account_file(
+        "service_account.json", scopes=scopes
+    )
+    return gspread.authorize(creds)
 
 
-def export_to_json(rows: List[Dict], path: str) -> None:
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(rows, f, indent=2, ensure_ascii=False)
-
-
-def append_row_to_sheet(gc, sheet_id: str, tab_name: str, row_dict: Dict, columns: List[str]) -> None:
+def export_rows_to_google_sheet(rows: List[Dict], columns: List[str], sheet_id: str, tab_name: str):
+    gc = get_gspread_client()
     sh = gc.open_by_key(sheet_id)
-    ws = sh.worksheet(tab_name)
 
-    values = [row_dict.get(col, "") for col in columns]
-    ws.append_row(values, value_input_option="USER_ENTERED")  # fixed Python comment
+    try:
+        ws = sh.worksheet(tab_name)
+        ws.clear()
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sh.add_worksheet(title=tab_name, rows=1000, cols=len(columns))
+
+    output_rows = [columns]
+    for row in rows:
+        output_rows.append([row.get(col, "") for col in columns])
+
+    ws.update("A1", output_rows)
+
+
+def map_to_aha(student: Dict) -> Dict:
+    return {
+        "student_name": student.get("student_name", "") or "",
+        "email": student.get("email", "") or "",
+        "phone": student.get("phone", "") or "",
+        "course": student.get("course", "") or "",
+        "class_date": student.get("class_date", "") or "",
+        "location": student.get("location", "") or "",
+        "payment_status": student.get("payment_status", "unknown") or "unknown",
+        "received_datetime": student.get("received_datetime", "") or "",
+        "source_subject": student.get("source_subject", "") or "",
+        "source_internet_message_id": student.get("source_internet_message_id", "") or "",
+    }
+
+
+def map_to_rqi(student: Dict) -> Dict:
+    return {
+        "student_name": student.get("student_name", "") or "",
+        "email": student.get("email", "") or "",
+        "course": student.get("course", "") or "",
+        "rqi_required": student.get("rqi_required", "yes") or "yes",
+        "status": student.get("status", "pending") or "pending",
+        "notes": student.get("notes", "") or "",
+        "received_datetime": student.get("received_datetime", "") or "",
+        "source_internet_message_id": student.get("source_internet_message_id", "") or "",
+    }
+
+
+def map_to_raw(student: Dict) -> Dict:
+    return {
+        "student_name": student.get("student_name", "") or "",
+        "email": student.get("email", "") or "",
+        "phone": student.get("phone", "") or "",
+        "course": student.get("course", "") or "",
+        "class_date": student.get("class_date", "") or "",
+        "location": student.get("location", "") or "",
+        "received_datetime": student.get("received_datetime", "") or "",
+        "payment_status": student.get("payment_status", "unknown") or "unknown",
+        "source_subject": student.get("source_subject", "") or "",
+        "source_internet_message_id": student.get("source_internet_message_id", "") or "",
+        "status": student.get("status", "pending") or "pending",
+        "notes": student.get("notes", "") or "",
+        "rqi_required": student.get("rqi_required", "yes") or "yes",
+    }
+
+
+def normalize_record(record: Dict) -> Dict:
+    return {
+        "student_name": record.get("student_name", "") or record.get("name", "") or "",
+        "email": record.get("email", "") or "",
+        "phone": record.get("phone", "") or "",
+        "course": record.get("course", "") or "",
+        "class_date": record.get("class_date", "") or record.get("date", "") or "",
+        "location": record.get("location", "") or "",
+        "payment_status": record.get("payment_status", "unknown") or "unknown",
+        "received_datetime": record.get("received_datetime", "") or "",
+        "source_subject": record.get("source_subject", "") or "",
+        "source_internet_message_id": record.get("source_internet_message_id", "") or "",
+        "status": record.get("status", "pending") or "pending",
+        "notes": record.get("notes", "") or "",
+        "rqi_required": record.get("rqi_required", "yes") or "yes",
+    }
 
 
 def renderExport():
-    """
-    Streamlit page function expected by app/main.py:
-      from app.ui.Export import renderExport
-    """
-
     st.title("Export")
 
-    st.write("Choose an export format below.")
+    if st.button("Auto Load Data", type="primary"):
+        try:
+            results, records = run_email_pipeline()
+            parsed_students = []
 
+            for record in records:
+                if record.get("email_type") == "registration":
+                    parsed_students.append(normalize_record(record))
 
-    st.subheader("Export options")
+            st.session_state["parsed_students"] = parsed_students
+            st.success(f"Loaded {len(parsed_students)} registration record(s).")
+            st.rerun()
+        except Exception as e:
+            st.error(f"Auto load failed: {e}")
 
-    export_type = st.radio("Export type", ["CSV", "JSON"], horizontal=True)
+    if "parsed_students" not in st.session_state or not st.session_state["parsed_students"]:
+        st.warning("No parsed email data available to export.")
+        return
 
-    st.info(
-        "This page is wired up so the app runs without import errors.\n\n"
-        "To actually export data, we need to know where your student rows live "
-        "(for example: st.session_state['students'] or a database)."
+    students = st.session_state["parsed_students"]
+    st.success(f"{len(students)} parsed student records ready for export.")
+
+    export_type = st.selectbox(
+        "Choose export format",
+        ["Raw Student Export", "AHA Export", "RQI Export"]
     )
 
+    if export_type == "Raw Student Export":
+        rows = [map_to_raw(student) for student in students]
+        columns = RAW_COLUMNS
+        default_tab = "Raw Export"
+    elif export_type == "AHA Export":
+        rows = [map_to_aha(student) for student in students]
+        columns = AHA_COLUMNS
+        default_tab = "AHA Export"
+    else:
+        rows = [map_to_rqi(student) for student in students]
+        columns = RQI_COLUMNS
+        default_tab = "RQI Export"
 
-    demo_rows = [
-        {
-            "student_name": "Demo Student",
-            "email": "demo@example.com",
-            "phone": "555-555-5555",
-            "course": "CSC 131",
-            "class_date": "2026-02-24",
-            "location": "Online",
-            "payment_status": "unknown",
-            "received_datetime": "",
-            "source_subject": "",
-            "source_internet_message_id": "",
-        }
-    ]
+    st.subheader("Preview")
+    st.dataframe(rows, use_container_width=True)
 
-    if st.button("Download Demo Export"):
-        if export_type == "CSV":
-            import io
-            output = io.StringIO()
-            writer = csv.DictWriter(output, fieldnames=AHA_COLUMNS)
-            writer.writeheader()
-            for r in demo_rows:
-                writer.writerow({c: r.get(c, "") for c in AHA_COLUMNS})
+    csv_output = io.StringIO()
+    writer = csv.DictWriter(csv_output, fieldnames=columns)
+    writer.writeheader()
 
-            st.download_button(
-                label="Click to download CSV",
-                data=output.getvalue(),
-                file_name="export.csv",
-                mime="text/csv",
-            )
-        else:
-            st.download_button(
-                label="Click to download JSON",
-                data=json.dumps(demo_rows, indent=2),
-                file_name="export.json",
-                mime="application/json",
-            )
+    for row in rows:
+        writer.writerow({col: row.get(col, "") for col in columns})
+
+    st.download_button(
+        label="Download CSV",
+        data=csv_output.getvalue(),
+        file_name="students_export.csv",
+        mime="text/csv",
+    )
+
+    json_output = json.dumps(rows, indent=2, ensure_ascii=False)
+
+    st.download_button(
+        label="Download JSON",
+        data=json_output,
+        file_name="students_export.json",
+        mime="application/json",
+    )
+
+    st.divider()
+    st.subheader("Export to Google Sheets")
+
+    if "export_sheet_id" not in st.session_state:
+        st.session_state["export_sheet_id"] = ""
+
+    if "export_tab_name" not in st.session_state:
+        st.session_state["export_tab_name"] = default_tab
+
+    st.session_state["export_sheet_id"] = st.text_input(
+        "Google Sheet ID",
+        value=st.session_state["export_sheet_id"],
+        placeholder="Example: 1AbCDeFgHiJkLmNoPq..."
+    )
+
+    st.session_state["export_tab_name"] = st.text_input(
+        "Tab name for export",
+        value=st.session_state["export_tab_name"]
+    )
+
+    if st.button("Export to Google Sheets", type="primary"):
+        sheet_id = st.session_state["export_sheet_id"].strip()
+        tab_name = st.session_state["export_tab_name"].strip()
+
+        if not sheet_id:
+            st.error("Please enter a Google Sheet ID.")
+            return
+
+        try:
+            export_rows_to_google_sheet(rows, columns, sheet_id, tab_name)
+            st.success(f"{export_type} successfully exported to Google Sheets tab '{tab_name}'.")
+        except Exception as e:
+            st.error(f"Google Sheets export failed: {e}")
