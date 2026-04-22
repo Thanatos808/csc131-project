@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from ui.CommonWidgets import renderTopSummary
 
 def renderDashboard():
     st.title("Dashboard")
@@ -37,6 +38,14 @@ def renderDashboard():
     ]
 
     df = pd.DataFrame(data)
+
+    #Summary counts
+    totalRecords = len(df)
+    backlog = len(df[df["Status"] == "Backlog"])
+    inProgress = len(df[df["Status"] == "In Progress"])
+    completed = len(df[df["Status"] == "Completed"])
+
+    renderTopSummary(totalRecords, backlog, inProgress, completed)
 
     #Apply Filtering Logic
 

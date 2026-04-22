@@ -1,10 +1,10 @@
-from app.services.read_emails import get_access_token, read_emails
-from app.services.email_parsing import process_emails, parse_registration_email, parse_atlas_notification_email
-from app.services.atlas_automation import run as atlas_run
+from services.read_emails import get_access_token, read_emails
+from services.email_parsing import process_emails, parse_registration_email, parse_atlas_notification_email
+from services.atlas_automation import run as atlas_run
 import requests
 from playwright.sync_api import Playwright, sync_playwright
-from app.services.record_formatter import format_for_intake
-from app.ui.Intake import send_to_intake
+from services.record_formatter import format_for_intake
+from ui.Intake import send_to_intake
 import streamlit as st
 
 def run_email_pipeline(log=print): 

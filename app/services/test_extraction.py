@@ -1,4 +1,4 @@
-from app.services.email_parsing import parse_registration_email, parse_payment_email
+from services.email_parsing import parse_registration_email, parse_payment_email
 
 # Test registration email parsing
 def test_registration_email():

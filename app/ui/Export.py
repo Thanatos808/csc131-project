@@ -6,7 +6,7 @@ from typing import Dict, List
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-from app.services.email_pipeline import run_email_pipeline
+from services.email_pipeline import run_email_pipeline
 
 
 AHA_COLUMNS: List[str] = [

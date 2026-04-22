@@ -1,4 +1,4 @@
-from app.services.email_pipeline import run_email_pipeline
+from services.email_pipeline import run_email_pipeline
 import asyncio
 import sys
 import streamlit as st
