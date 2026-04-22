@@ -24,7 +24,14 @@ def renderDashboard():
         #placeholder button for future use
         st.write("")
         st.write("")
-        st.button("Refresh")
+        if st.button("Refresh"):
+            st.rerun()
+
+    #sort option
+    sortOption = st.selectbox(
+        "Sort by",
+        ["Name", "Course", "Status"]
+    )
         
     st.divider()
 
@@ -38,6 +45,9 @@ def renderDashboard():
     ]
 
     df = pd.DataFrame(data)
+
+    #Helper column for last name sorting
+    df["LastNameSort"] = df["Name"].apply(lambda name: name.split()[-1].lower() if isinstance(name, str) and name.strip() else "")
 
     #Summary counts
     totalRecords = len(df)
@@ -73,6 +83,21 @@ def renderDashboard():
             df["Name"].str.contains(q, case=False)
             | df["Email"].str.contains(q, case=False)
         ]
+
+    #Apply sorting
+    if sortOption == "Status":
+        statusOrder = ["Backlog", "In Progress", "Completed"]
+        df["Status"] = pd.Categorical(df["Status"], categories=statusOrder, ordered=True)
+        df = df.sort_values(by="Status")
+
+    elif sortOption == "Name":
+        df = df.sort_values(by=["LastNameSort", "Name"])
+
+    elif sortOption in df.columns:
+        df = df.sort_values(by=sortOption)
+
+    #show filtered results count
+    st.metric("Filtered results", len(df))
 
     #Display table
 
