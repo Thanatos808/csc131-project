@@ -1,6 +1,7 @@
 import csv
 import json
 import io
+import os
 from typing import Dict, List
 
 import streamlit as st
@@ -142,21 +143,50 @@ def normalize_record(record: Dict) -> Dict:
     }
 
 
+def save_rows_to_csv_and_json(rows: List[Dict], columns: List[str], base_filename: str = "students_export"):
+    os.makedirs("exports", exist_ok=True)
+
+    csv_path = os.path.join("exports", f"{base_filename}.csv")
+    json_path = os.path.join("exports", f"{base_filename}.json")
+
+    with open(csv_path, "w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=columns)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({col: row.get(col, "") for col in columns})
+
+    with open(json_path, "w", encoding="utf-8") as json_file:
+        json.dump(rows, json_file, indent=2, ensure_ascii=False)
+
+    return csv_path, json_path
+
+
 def renderExport():
     st.title("Export")
 
     if st.button("Auto Load Data", type="primary"):
         try:
             results, records = run_email_pipeline()
-            parsed_students = []
 
+            parsed_students = []
             for record in records:
                 if record.get("email_type") == "registration":
                     parsed_students.append(normalize_record(record))
 
             st.session_state["parsed_students"] = parsed_students
+
+            raw_rows = [map_to_raw(student) for student in parsed_students]
+            csv_path, json_path = save_rows_to_csv_and_json(
+                raw_rows,
+                RAW_COLUMNS,
+                base_filename="students_export"
+            )
+
             st.success(f"Loaded {len(parsed_students)} registration record(s).")
+            st.success(f"Saved files:\nCSV: {csv_path}\nJSON: {json_path}")
+
             st.rerun()
+
         except Exception as e:
             st.error(f"Auto load failed: {e}")
 
@@ -176,14 +206,17 @@ def renderExport():
         rows = [map_to_raw(student) for student in students]
         columns = RAW_COLUMNS
         default_tab = "Raw Export"
+        base_filename = "students_raw_export"
     elif export_type == "AHA Export":
         rows = [map_to_aha(student) for student in students]
         columns = AHA_COLUMNS
         default_tab = "AHA Export"
+        base_filename = "students_aha_export"
     else:
         rows = [map_to_rqi(student) for student in students]
         columns = RQI_COLUMNS
         default_tab = "RQI Export"
+        base_filename = "students_rqi_export"
 
     st.subheader("Preview")
     st.dataframe(rows, use_container_width=True)
@@ -191,14 +224,13 @@ def renderExport():
     csv_output = io.StringIO()
     writer = csv.DictWriter(csv_output, fieldnames=columns)
     writer.writeheader()
-
     for row in rows:
         writer.writerow({col: row.get(col, "") for col in columns})
 
     st.download_button(
         label="Download CSV",
         data=csv_output.getvalue(),
-        file_name="students_export.csv",
+        file_name=f"{base_filename}.csv",
         mime="text/csv",
     )
 
@@ -207,9 +239,16 @@ def renderExport():
     st.download_button(
         label="Download JSON",
         data=json_output,
-        file_name="students_export.json",
+        file_name=f"{base_filename}.json",
         mime="application/json",
     )
+
+    if st.button("Save CSV and JSON to exports folder"):
+        try:
+            csv_path, json_path = save_rows_to_csv_and_json(rows, columns, base_filename)
+            st.success(f"Saved files:\nCSV: {csv_path}\nJSON: {json_path}")
+        except Exception as e:
+            st.error(f"File save failed: {e}")
 
     st.divider()
     st.subheader("Export to Google Sheets")
