@@ -32,9 +32,9 @@ def renderDashboard():
         #Replace later with loadStudents()
 
     data= [
-        {"recordId": "R-1001", "Name": "John Smith", "Email": "john@example.com", "Course": "BLS", "Status": "Backlog"},
-        {"recordId": "R-1002", "Name": "Sarah Lee", "Email": "sarah@example.com", "Course": "ACLS", "Status": "In Progress"},
-        {"recordId": "R-1003", "Name": "Mike Davis", "Email": "mike@example.com", "Course": "PALS", "Status": "Completed"},
+        {"recordId": "R-1001", "Name": "John Smith", "Email": "john@example.com", "Course": "BLS", "Status": "Backlog", "Payment" : "Unpaid"},
+        {"recordId": "R-1002", "Name": "Sarah Lee", "Email": "sarah@example.com", "Course": "ACLS", "Status": "In Progress", "Payment" : "Pending"},
+        {"recordId": "R-1003", "Name": "Mike Davis", "Email": "mike@example.com", "Course": "PALS", "Status": "Completed", "Payment" : "Paid"},
     ]
 
     df = pd.DataFrame(data)
@@ -47,8 +47,23 @@ def renderDashboard():
 
     renderTopSummary(totalRecords, backlog, inProgress, completed)
 
-    #Apply Filtering Logic
+    #Visual indicators
+    statusIcons = {
+        "Backlog": "🟡 Backlog",
+        "In Progress": "🔵 In Progress",
+        "Completed": "🟢 Completed"
+    }
 
+    paymentIcons = {
+        "Unpaid": "🔴 Unpaid",
+        "Pending": "🟡 Pending",
+        "Paid": "🟢 Paid"
+    }
+
+    df["Progress"] = df["Status"].map(statusIcons).fillna(df["Status"])
+    df["Payment Flag"] = df["Payment"].map(paymentIcons).fillna(df["Payment"])
+
+    #Apply Filtering Logic
     if statusFilter != "All":
         df = df[df["Status"] == statusFilter]
 
@@ -67,7 +82,7 @@ def renderDashboard():
     
     #Show only visible columns
     st.dataframe(
-        df[["Name", "Email", "Course", "Status"]],
+        df[["Name", "Email", "Course", "Progress", "Payment Flag"]],
         use_container_width=True,
         hide_index=True
     )
