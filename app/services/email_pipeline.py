@@ -29,7 +29,7 @@ def run_email_pipeline(log=print):
 
         # only appends email matching atlas or registration
         if reg or atlas:
-            messages.append({"body": e.get("body", {})})
+             messages.append(e)
 
     log(f"Processing {len(messages)} filtered emails...\n")
     records = process_emails(messages)
