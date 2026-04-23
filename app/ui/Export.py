@@ -31,7 +31,7 @@ def renderExport():
 
     if st.button("Auto Load Data", type="primary"):
         try:
-            token = get_access_token(log=st.write)
+            token = get_access_token(log=lambda x: None)
             emails = read_emails(token)
 
             parsed_students = []
@@ -70,6 +70,13 @@ def renderExport():
         st.warning("No parsed email data available to export.")
         return
 
+    students = sorted(
+        students,
+        key=lambda x: x["received_datetime"],
+        reverse=True
+    )
+
+    st.metric("Total Students Loaded", len(students))
     st.success(f"{len(students)} student record(s) ready for export.")
     st.dataframe(students, use_container_width=True)
 
