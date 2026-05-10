@@ -1,10 +1,16 @@
+# macOS
+.DS_Store
+
+# Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.env
-venv/
 .venv/
-.env.local
-*.db
+
+# Java
+*.class
+
+# VS Code
 .vscode/
+
+# Data outputs
+*.csv

@@ -1,18 +1,22 @@
-# imports json for saving/loading data 
+# Import JSON for saving and loading registration data
 import json
+
+# Import Appointment class
 from appointment import Appointment
-# import appointment class 
-# scheduler class manages all registrations 
+
+
+# Scheduler class manages all class registrations
 class Scheduler:
 
-# creates appoitment list 
+    # Create empty appointment list
     def __init__(self):
         self.appointments = []
-# add a new appoinment if class is not full 
+
+    # Add a new appointment if the class is not full
     def add_appointment(self, appointment, max_seats=10):
         count = 0
 
-#count students already registered 
+        # Count how many students are already registered for the same class
         for appt in self.appointments:
             same_class = (
                 appt.course_type == appointment.course_type and
@@ -23,25 +27,32 @@ class Scheduler:
 
             if same_class:
                 count += 1
-     # stop registration if class is full   
+
+        # Stop registration if class reached the seat limit
         if count >= max_seats:
             return False
-# add appitment to list 
+
+        # Add appointment to the list
         self.appointments.append(appointment)
         return True
-# return all appoitments 
+
+    # Return all saved appointments
     def get_appointments(self):
         return self.appointments
-# remove an appoitment 
+
+    # Remove one appointment
     def remove_appointment(self, appointment):
         if appointment in self.appointments:
             self.appointments.remove(appointment)
             return True
+
         return False
-# save appoitments to a json file
+
+    # Save appointments to a JSON file
     def save_to_file(self, filename="appointments.json"):
         data = []
-# convert appoitments into disctionary format
+
+        # Convert appointment objects into dictionary format
         for appt in self.appointments:
             data.append({
                 "student_name": appt.student_name,
@@ -50,16 +61,22 @@ class Scheduler:
                 "date": appt.date,
                 "time": appt.time
             })
+
+        # Write registration data into the JSON file
         with open(filename, "w") as file:
             json.dump(data, file, indent=4)
- 
+
+    # Load appointments from a JSON file
     def load_from_file(self, filename="appointments.json"):
         try:
+            # Open and read saved registration data
             with open(filename, "r") as file:
                 data = json.load(file)
 
+            # Clear current appointment list
             self.appointments = []
 
+            # Convert dictionary data back into Appointment objects
             for item in data:
                 self.appointments.append(
                     Appointment(
@@ -71,5 +88,6 @@ class Scheduler:
                     )
                 )
 
+        # If no file exists yet, start with an empty list
         except FileNotFoundError:
             self.appointments = []
