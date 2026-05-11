@@ -3,7 +3,7 @@ import requests
 import json
 
 # Credentials
-CLIENT_ID = "19c09051-a817-4669-ab5f-55d43b192816"
+CLIENT_ID = "693b99b9-c87b-48c7-b331-a7dd2cdbca43"
 TENANT = "common"  # allows personal Microsoft accounts
 AUTHORITY = f"https://login.microsoftonline.com/common"
 
