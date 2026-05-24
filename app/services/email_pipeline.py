@@ -67,37 +67,36 @@ def run_email_pipeline(log=print):
    
     log("Intake completed.")
     # Step 3: Run Atlas automation to register students
-    log("\nAtlas automation disregarded for time purposes..\n")
-    # atlas_emails = [r for r in records if r.get("email_type") == "atlas_notification"] # Atlas notifications ONLY
+    atlas_emails = [r for r in records if r.get("email_type") == "atlas_notification"] # Atlas notifications ONLY
     results = []
-    # with sync_playwright() as playwright:
-    #     for email in atlas_emails:
-    #         instructor_name = email.get("instructor_name")
-    #         date_str = email.get("date")
-    #         log(f"Registering student for instructor {instructor_name} on {date_str}...")
-    #         try:
-    #             result = atlas_run(playwright, instructor_name, date_str)
-    #             results.append(result)
-    #         except Exception as e: # Catch errors to allow processing other emails
-    #             log(f"Error registering: {e}")
-    #             #results.append(str(e))
-    #             continue
+    with sync_playwright() as playwright:
+        for email in atlas_emails:
+            instructor_name = email.get("instructor_name")
+            date_str = email.get("date")
+            log(f"Registering student for instructor {instructor_name} on {date_str}...")
+            try:
+                result = atlas_run(playwright, instructor_name, date_str)
+                results.append(result)
+            except Exception as e: # Catch errors to allow processing other emails
+                log(f"Error registering: {e}")
+                #results.append(str(e))
+                continue
 
-    # log("\nSending Atlas results to Sheet2...\n")
-    # sheet_id = st.session_state.get("sheet_id", "")
-    # if not sheet_id:
-    #     log("No Sheet ID configured. Skipping Atlas upload.")
-    # else:
-    #     for result in results:
-    #         # valid dics only
-    #         if not isinstance(result, dict):
-    #             continue
-    #         parsed_student = format_for_intake(result)
-    #         try:
-    #             send_to_intake(parsed_student, sheet_id, tab_name_atlas)
+    log("\nSending Atlas results to Sheet2...\n")
+    sheet_id = st.session_state.get("sheet_id", "")
+    if not sheet_id:
+        log("No Sheet ID configured. Skipping Atlas upload.")
+    else:
+        for result in results:
+            # valid dics only
+            if not isinstance(result, dict):
+                continue
+            parsed_student = format_for_intake(result)
+            try:
+                send_to_intake(parsed_student, sheet_id, tab_name_atlas)
 
-    #         except Exception as e:
-    #             log(f"Error sending Atlas result to sheet: {e}")
+            except Exception as e:
+                log(f"Error sending Atlas result to sheet: {e}")
     print("\n=== Registration Results ===\n")
     for r in results:
         print(r)
