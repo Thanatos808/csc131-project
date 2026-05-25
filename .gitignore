@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Java
+*.class
+
+# VS Code
+.vscode/
+
+# Data outputs
+*.csv
+
+# secrets
+*.json

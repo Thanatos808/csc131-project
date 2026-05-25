@@ -6,8 +6,8 @@ from click import option
 from playwright.sync_api import Playwright, sync_playwright, expect
 
 # CONFIG
-USERNAME = "Sacstatecpr@outlook.com"
-PASSWORD = "ssCPR123*"
+USERNAME = "sacstatecpr@outlook.com"
+PASSWORD = "ssCPRLL123*"
 
 # TO DO !!!!
 # need to account for non-BLS courses

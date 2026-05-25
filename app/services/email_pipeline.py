@@ -29,7 +29,7 @@ def run_email_pipeline(log=print):
 
         # only appends email matching atlas or registration
         if reg or atlas:
-             messages.append(e)
+            messages.append({"body": e.get("body", {})})
 
     log(f"Processing {len(messages)} filtered emails...\n")
     records = process_emails(messages)
@@ -67,7 +67,6 @@ def run_email_pipeline(log=print):
    
     log("Intake completed.")
     # Step 3: Run Atlas automation to register students
-    log("\nRunning Atlas automation...\n")
     atlas_emails = [r for r in records if r.get("email_type") == "atlas_notification"] # Atlas notifications ONLY
     results = []
     with sync_playwright() as playwright:
