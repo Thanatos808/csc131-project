@@ -26,7 +26,7 @@ def renderExport():
     if "students" not in st.session_state:
         st.session_state["students"] = []
 
-        if "seen_keys" not in st.session_state:
+           if "seen_keys" not in st.session_state:
         st.session_state["seen_keys"] = set()
 
     if st.button("Auto Load Data", type="primary"):
@@ -54,11 +54,11 @@ def renderExport():
                         normalized["course"],
                     )
 
-                    if unique_key not in st.session_state["seen_keys"]:
+                          if unique_key not in st.session_state["seen_keys"]:
                         st.session_state["seen_keys"].add(unique_key)
                         parsed_students.append(normalized)
 
-            st.session_state["students"] = parsed_students
+  st.session_state["students"] = parsed_students
             st.success(f"Loaded {len(parsed_students)} registration record(s).")
 
        except Exception as e:
@@ -73,7 +73,7 @@ def renderExport():
     st.success(f"{len(students)} student record(s) ready for export.")
     st.dataframe(students, use_container_width=True)
 
-    csv_output = io.StringIO()
+       csv_output = io.StringIO()
     fieldnames = [
         "student_name",
         "email",
@@ -83,8 +83,7 @@ def renderExport():
         "location",
         "received_datetime",
     ]
-
-    writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
+ writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
     writer.writeheader()
  for row in students:
         writer.writerow(row)
@@ -98,7 +97,7 @@ def renderExport():
         mime="text/csv",
     )
 
-    json_output = json.dumps(students, indent=2)
+         json_output = json.dumps(students, indent=2)
     st.download_button(
         label="Download JSON",
         data=json_output,
