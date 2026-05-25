@@ -13,7 +13,7 @@ def normalize_record(record):
         "student_name": record.get("student_name", "") or record.get("name", "") or "",
         "email": record.get("email", "") or "",
         "phone": record.get("phone", "") or "",
-        "course": record.get("course", "") or "",
+     "course": record.get("course", "") or "",
         "class_date": record.get("class_date", "") or record.get("date", "") or "",
         "location": record.get("location", "") or "",
         "received_datetime": record.get("received_datetime", "") or "",
@@ -26,7 +26,7 @@ def renderExport():
     if "students" not in st.session_state:
         st.session_state["students"] = []
 
-    if "seen_keys" not in st.session_state:
+        if "seen_keys" not in st.session_state:
         st.session_state["seen_keys"] = set()
 
     if st.button("Auto Load Data", type="primary"):
@@ -61,7 +61,7 @@ def renderExport():
             st.session_state["students"] = parsed_students
             st.success(f"Loaded {len(parsed_students)} registration record(s).")
 
-        except Exception as e:
+       except Exception as e:
             st.error(f"Auto load failed: {e}")
 
     students = st.session_state.get("students", [])
@@ -79,14 +79,14 @@ def renderExport():
         "email",
         "phone",
         "course",
-        "class_date",
+       "class_date",
         "location",
         "received_datetime",
     ]
 
     writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
     writer.writeheader()
-    for row in students:
+ for row in students:
         writer.writerow(row)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -99,7 +99,6 @@ def renderExport():
     )
 
     json_output = json.dumps(students, indent=2)
-
     st.download_button(
         label="Download JSON",
         data=json_output,
