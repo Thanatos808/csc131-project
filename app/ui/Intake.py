@@ -18,7 +18,7 @@ def get_gspread_client():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
     ]
-    creds = Credentials.from_service_account_file("service_account.json", scopes=scopes)
+            creds = Credentials.from_service_account_file("service_account.json", scopes=scopes)
     return gspread.authorize(creds)
 
 def append_student_to_sheet(student: dict, sheet_id: str, tab_name: str):
@@ -38,7 +38,7 @@ def append_student_to_sheet(student: dict, sheet_id: str, tab_name: str):
     if not sheet_id:
         raise ValueError("No Sheet ID provided to send_to_intake.")
 
-    append_student_to_sheet(student, sheet_id, tab_name)
+            append_student_to_sheet(student, sheet_id, tab_name)
     if "students" not in st.session_state: # make sure it exists
         st.session_state["students"] = []
     if "students" in st.session_state:
@@ -56,7 +56,7 @@ def append_student_to_sheet(student: dict, sheet_id: str, tab_name: str):
 def renderIntake():
     st.title("Intake")
     if "students" not in st.session_state:
-        st.session_state["students"] = []
+                st.session_state["students"] = []
     if "sheet_id" not in st.session_state:
         st.session_state["sheet_id"] = ""
     if "tab_name" not in st.session_state:
@@ -70,7 +70,7 @@ def renderIntake():
     )
     st.session_state["tab_name"] = st.text_input(
         "Tab name",
-        value=st.session_state["tab_name"],
+                value=st.session_state["tab_name"],
     )
 
     st.divider()
@@ -89,7 +89,7 @@ def renderIntake():
         new_student = {
             "student_name": student_name.strip(),
           "email": email.strip(),
-            "phone": phone.strip(),
+                "phone": phone.strip(),
             "course": course.strip(),
          "class_date": class_date.strip(),
             "location": location.strip(),
@@ -104,7 +104,7 @@ def renderIntake():
         if sheet_id:
             try:
                 append_student_to_sheet(new_student, sheet_id, tab_name)
-                st.success("Student added AND uploaded to Google Sheets ")
+                    st.success("Student added AND uploaded to Google Sheets ")
             except Exception as e:
                 st.warning("Student added locally, but Google Sheets upload failed.")
           st.error(f"Sheets error: {e}")
@@ -113,4 +113,4 @@ def renderIntake():
 
     if st.session_state["students"]:
         st.subheader("Students collected so far")
-        st.dataframe(st.session_state["students"], use_container_width=True)
+            st.dataframe(st.session_state["students"], use_container_width=True)
