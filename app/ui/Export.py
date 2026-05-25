@@ -37,7 +37,7 @@ def renderExport():
             parsed_students = []
             st.session_state["seen_keys"] = set()
 
-            for e in emails:
+     for e in emails:
                 body = e.get("body", {}).get("content", "")
                         record = parse_registration_email(body)
 
@@ -54,7 +54,7 @@ def renderExport():
                         normalized["course"],
                     )
 
-                          if unique_key not in st.session_state["seen_keys"]:
+             if unique_key not in st.session_state["seen_keys"]:
                         st.session_state["seen_keys"].add(unique_key)
                     parsed_students.append(normalized)
 
@@ -65,12 +65,11 @@ def renderExport():
             st.error(f"Auto load failed: {e}")
 
     students = st.session_state.get("students", [])
-
-    if not students:
+ if not students:
         st.warning("No parsed email data available to export.")
         return
 
-    st.success(f"{len(students)} student record(s) ready for export.")
+st.success(f"{len(students)} student record(s) ready for export.")
     st.dataframe(students, use_container_width=True)
 
        csv_output = io.StringIO()
@@ -85,7 +84,7 @@ def renderExport():
     ]
  writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
     writer.writeheader()
-     for row in students:
+  for row in students:
         writer.writerow(row)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -93,7 +92,7 @@ def renderExport():
     st.download_button(
         label="Download CSV",
         data=csv_output.getvalue(),
-        file_name=f"students_export_{timestamp}.csv",
+      file_name=f"students_export_{timestamp}.csv",
         mime="text/csv",
     )
 
