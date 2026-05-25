@@ -4,7 +4,6 @@ from typing import List, Dict
 import gspread
 from google.oauth2.service_account import Credentials
 
-
 COLUMNS = [
     "student_name",
     "email",
@@ -14,8 +13,6 @@ COLUMNS = [
     "location",
     "received_datetime",
 ]
-
-
 def get_gspread_client():
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
@@ -30,13 +27,13 @@ def append_student_to_sheet(student: dict, sheet_id: str, tab_name: str):
     ws = sh.worksheet(tab_name)
     existing = ws.get_all_values()
     if not existing:
-        ws.append_row(COLUMNS, value_input_option="USER_ENTERED")
+      ws.append_row(COLUMNS, value_input_option="USER_ENTERED")
 
     row = [student.get(col, "") for col in COLUMNS]
     ws.append_row(row, value_input_option="USER_ENTERED")
 
 
-def send_to_intake(student: Dict, sheet_id: str, tab_name: str = "Sheet1"):
+         def send_to_intake(student: Dict, sheet_id: str, tab_name: str = "Sheet1"):
     
     if not sheet_id:
         raise ValueError("No Sheet ID provided to send_to_intake.")
@@ -54,7 +51,7 @@ def send_to_intake(student: Dict, sheet_id: str, tab_name: str = "Sheet1"):
         # adds new students
         new_entry = student.copy()
         new_entry["completed"] = True
-        st.session_state["students"].append(new_entry)
+            st.session_state["students"].append(new_entry)
 
 def renderIntake():
     st.title("Intake")
@@ -80,7 +77,7 @@ def renderIntake():
 
     with st.form("intake_form"):
         student_name = st.text_input("Student Name")
-        email = st.text_input("Email")
+            email = st.text_input("Email")
         phone = st.text_input("Phone")
     course = st.text_input("Course")
         class_date = st.text_input("Class Date")
