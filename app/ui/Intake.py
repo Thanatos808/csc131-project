@@ -82,7 +82,7 @@ def renderIntake():
         student_name = st.text_input("Student Name")
         email = st.text_input("Email")
         phone = st.text_input("Phone")
-        course = st.text_input("Course")
+    course = st.text_input("Course")
         class_date = st.text_input("Class Date")
         location = st.text_input("Location")
 
@@ -94,7 +94,7 @@ def renderIntake():
           "email": email.strip(),
             "phone": phone.strip(),
             "course": course.strip(),
-            "class_date": class_date.strip(),
+         "class_date": class_date.strip(),
             "location": location.strip(),
             "received_datetime": datetime.now().isoformat(timespec="seconds"),
         }
