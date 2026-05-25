@@ -9,7 +9,7 @@ COLUMNS = [
     "student_name",
     "email",
     "phone",
-    "course",
+  "course",
     "class_date",
     "location",
     "received_datetime",
@@ -24,13 +24,10 @@ def get_gspread_client():
     creds = Credentials.from_service_account_file("service_account.json", scopes=scopes)
     return gspread.authorize(creds)
 
-
 def append_student_to_sheet(student: dict, sheet_id: str, tab_name: str):
     gc = get_gspread_client()
-    sh = gc.open_by_key(sheet_id)
+   sh = gc.open_by_key(sheet_id)
     ws = sh.worksheet(tab_name)
-
-    
     existing = ws.get_all_values()
     if not existing:
         ws.append_row(COLUMNS, value_input_option="USER_ENTERED")
@@ -40,18 +37,15 @@ def append_student_to_sheet(student: dict, sheet_id: str, tab_name: str):
 
 
 def send_to_intake(student: Dict, sheet_id: str, tab_name: str = "Sheet1"):
-    """
-    Upload a single student to Google Sheets AND mark as completed in Streamlit session_state (if available).
-    """
+    
     if not sheet_id:
         raise ValueError("No Sheet ID provided to send_to_intake.")
 
-    # Upload to Google Sheet
     append_student_to_sheet(student, sheet_id, tab_name)
     if "students" not in st.session_state: # make sure it exists
         st.session_state["students"] = []
     if "students" in st.session_state:
-        # searches existing students
+       
         for s in st.session_state["students"]:
             if s.get("email") == student.get("email"):
                 s["completed"] = True
@@ -97,7 +91,7 @@ def renderIntake():
     if submitted:
         new_student = {
             "student_name": student_name.strip(),
-            "email": email.strip(),
+          "email": email.strip(),
             "phone": phone.strip(),
             "course": course.strip(),
             "class_date": class_date.strip(),
@@ -107,7 +101,7 @@ def renderIntake():
 
         st.session_state["students"].append(new_student)
 
-        sheet_id = st.session_state["sheet_id"].strip()
+      sheet_id = st.session_state["sheet_id"].strip()
         tab_name = st.session_state["tab_name"].strip()
 
         if sheet_id:
@@ -116,7 +110,7 @@ def renderIntake():
                 st.success("Student added AND uploaded to Google Sheets ")
             except Exception as e:
                 st.warning("Student added locally, but Google Sheets upload failed.")
-                st.error(f"Sheets error: {e}")
+          st.error(f"Sheets error: {e}")
         else:
             st.success("Student added locally  (add Sheet ID to auto-upload)")
 
