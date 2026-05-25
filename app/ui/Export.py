@@ -39,10 +39,10 @@ def renderExport():
 
             for e in emails:
                 body = e.get("body", {}).get("content", "")
-                record = parse_registration_email(body)
+                        record = parse_registration_email(body)
 
                 if record and record.get("email"):
-                    normalized = normalize_record(record)
+                        normalized = normalize_record(record)
                     normalized["received_datetime"] = e.get(
                         "receivedDateTime",
                         datetime.now().isoformat(timespec="seconds")
@@ -50,16 +50,16 @@ def renderExport():
 
                     unique_key = (
                         normalized["email"],
-                        normalized["class_date"],
+              normalized["class_date"],
                         normalized["course"],
                     )
 
                           if unique_key not in st.session_state["seen_keys"]:
                         st.session_state["seen_keys"].add(unique_key)
-                        parsed_students.append(normalized)
+                    parsed_students.append(normalized)
 
   st.session_state["students"] = parsed_students
-            st.success(f"Loaded {len(parsed_students)} registration record(s).")
+                st.success(f"Loaded {len(parsed_students)} registration record(s).")
 
        except Exception as e:
             st.error(f"Auto load failed: {e}")
@@ -77,7 +77,7 @@ def renderExport():
     fieldnames = [
         "student_name",
         "email",
-        "phone",
+      "phone",
         "course",
        "class_date",
         "location",
@@ -85,7 +85,7 @@ def renderExport():
     ]
  writer = csv.DictWriter(csv_output, fieldnames=fieldnames)
     writer.writeheader()
- for row in students:
+     for row in students:
         writer.writerow(row)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
